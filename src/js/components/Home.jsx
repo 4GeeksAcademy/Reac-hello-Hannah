@@ -1,33 +1,75 @@
-import React, { useState } from "react";
-import List from "./List";
+import React, { useState, useEffect } from "react";
+import { GetAllUsers, CrearUsuario, GetTareas, CrearTarea } from "../../services/fetchs"
+
+
+
+
+
+
+
+
 const Home = () => {
-  const [tasks, setTasks] = useState([]);
 
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter" && e.target.value.trim() !== "") {
-      setTasks([...tasks, e.target.value.trim()]);
-      e.target.value = "";
+  const [listaUsuarios, setListaUsuarios] = useState([]);
+  const [respOk, setRespOk] = useState(false);
+  const userName = "hannah"
+  const [listaTareas, setListaTareas] = useState([]);
+  const [tarea, setTarea] = useState("");
+
+
+  useEffect(() => {
+    ObtenerUsuarios()
+  }, []);
+  useEffect(() => {
+    if (respOk === false) return;
+    const existeUsuario = listaUsuarios.some((u) => u.name === userName);
+    if (!existeUsuario) {
+      CrearUsuario(userName)
     }
-  };
+    else {
+      GetTareas(userName).then(setListaTareas)
 
-  const deleteTask = (indexToDelete) => {
-    setTasks(tasks.filter((_, index) => index !== indexToDelete));
+    }
+  }, [listaUsuarios]);
+
+  const ObtenerUsuarios = async () => {
+    const lista = await GetAllUsers();
+    setListaUsuarios(lista);
+    if (listaUsuarios) {
+      setRespOk(true)
+    }
+  }
+
+  const nuevaTarea = async (userName, tarea) => {
+    if (!tarea) return;
+    const nuevaTarea = await CrearTarea(userName, tarea);
+    setListaTareas([...listaTareas, nuevaTarea]);
+    setTarea("");
   };
+  console.log(listaTareas);
+  console.log(tarea);
+
+
 
   return (
     <div className="container mt-5 col-md-6">
       <h1 className="text-center text-danger">TODOS</h1>
-      <input
-        type="text"
-        className="form-control my-3"
-        placeholder="Escribe una tarea y presiona Enter"
-        onKeyDown={handleKeyPress}
-      />
-      <List tasks={tasks} onDelete={deleteTask} />
-      <div className="text-muted mt-3">
-        {tasks.length === 0 ? "No hay tareas, añadir tareas" : `${tasks.length} tareas`}
-      </div>
+        <input
+
+          placeholder="Escribe una tarea"
+          value={tarea}
+          onChange={(e) => setTarea(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              nuevaTarea(tarea, userName);
+            }
+          }}
+        ></input>
+      
+
+
     </div>
+
   );
 };
 
